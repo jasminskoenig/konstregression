@@ -64,7 +64,7 @@ vdem %>%
 
 # only relevant columns
 vdem2 %>% 
-  select(country_name,year,country_id,e_regiongeo,v2x_polyarchy,v2x_libdem,v2x_delibdem,v2x_egaldem, 
+  select(country_name,year,country_id,e_regiongeo,v2x_polyarchy,v2x_regime, v2x_libdem,v2x_delibdem,v2x_egaldem, 
          v2x_liberal,v2xcl_rol,v2x_jucon,v2jureform,v2jupurge,v2jupoatck,v2jupack,v2juaccnt,v2jucorrdc,
          v2juhcind,v2juncind,v2juhccomp,v2jucomp,v2jureview) -> 
   vdem2
@@ -104,7 +104,9 @@ ccpc %>%
 head(ccpc)
 
 # join vparty, vdem and ccpc
-ccpc_vdem <- merge(data,ccpc,by=c("country","year"),all.x=TRUE)
+ccpc_vdem <- merge(data,ccpc,by=c("country","year"),all.x=TRUE) %>%
+  filter(v2x_regime %in% c(3:4)) # only include liberal and electoral democracies
+
 head(ccpc_vdem)
 
 # save dataframes ----
@@ -113,8 +115,18 @@ head(ccpc_vdem)
 saveRDS(ccpc_vdem,file="data/ccpc_vdem.rds")
 
 # only European countries
-ccpc_vdem %>% filter(e_regiongeo %in% c(1:4)) -> ccpc_vdem_europe
+ccpc_vdem %>% 
+  filter(e_regiongeo %in% c(1:4)) -> 
+  ccpc_vdem_europe
 
 # save df with only European countries
+saveRDS(ccpc_vdem_europe,file="data/ccpc_vdem_europe.rds")
+
+# only European and Latin American countries
+ccpc_vdem %>% 
+  filter(e_regiongeo %in% c(1:4,17:29)) -> 
+  ccpc_vdem_ela
+
+# save df with only European and Latin American countries
 saveRDS(ccpc_vdem_europe,file="data/ccpc_vdem_europe.rds")
 

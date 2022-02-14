@@ -9,6 +9,7 @@ library(hrbthemes)
 # import data ----
 
 ccpc_vdem <- readRDS("data/ccpc_vdem.rds")
+ccpc_vdem_ela <- readRDS("data/ccpc_vdem_ela.rds")
 
 # number of changes ----
 
@@ -25,7 +26,7 @@ ccpc_vdem %>%
   geom_bar(position = "dodge", stat = "identity") +
   theme_minimal()
 
-# share of years in power - in shares they do use more amendments and impose new constitutions slightly more often
+# share of years in power for each eventtype 
 
 ccpc_vdem %>%
   mutate(pop_in_gov = as.factor(ifelse(gov_popul_weighted > 0.6, 1, 0))) %>%
@@ -41,7 +42,23 @@ ccpc_vdem %>%
   geom_bar(position = "dodge", stat = "identity") +
   theme_minimal()
 
-# share of years in power - in shares they do use more amendments and impose new constitutions slightly more often
+# only europe and LA - share of years in power for each eventtype 
+
+ccpc_vdem_ela %>%
+  mutate(pop_in_gov = as.factor(ifelse(gov_popul_weighted > 0.6, 1, 0))) %>%
+  filter(!is.na(pop_in_gov)) %>%
+  filter(!is.na(evnttype)) %>%
+  group_by(pop_in_gov) %>%
+  mutate(n_years = n()) %>%
+  group_by(pop_in_gov, evnttype) %>%
+  summarise(n_event = n(), n_years = n_years) %>%
+  unique() %>% 
+  mutate(share = n_event/n_years*100) %>%
+  ggplot(aes(x= evnttype, y = share, fill = pop_in_gov)) +
+  geom_bar(position = "dodge", stat = "identity") +
+  theme_minimal()
+
+# share of years in power for each eventtype - prime minister's party
 
 ccpc_vdem %>%
   mutate(pop_in_gov = as.factor(ifelse(gov_popul_prime > 0.6, 1, 0))) %>%
@@ -56,6 +73,22 @@ ccpc_vdem %>%
   ggplot(aes(x= evnttype, y = share, fill = pop_in_gov)) +
   geom_bar(position = "dodge", stat = "identity") +
   theme_minimal()
+
+# same only europe and LA - share of years in power for each eventtype - prime minister's party
+ccpc_vdem_ela %>%
+  mutate(pop_in_gov = as.factor(ifelse(gov_popul_prime > 0.6, 1, 0))) %>%
+  filter(!is.na(pop_in_gov)) %>%
+  filter(!is.na(evnttype)) %>%
+  group_by(pop_in_gov) %>%
+  mutate(n_years = n()) %>%
+  group_by(pop_in_gov, evnttype) %>%
+  summarise(n_event = n(), n_years = n_years) %>%
+  unique() %>% 
+  mutate(share = n_event/n_years*100) %>%
+  ggplot(aes(x= evnttype, y = share, fill = pop_in_gov)) +
+  geom_bar(position = "dodge", stat = "identity") +
+  theme_minimal()
+
 
 ################################
 
