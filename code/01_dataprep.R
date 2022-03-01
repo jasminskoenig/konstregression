@@ -1,13 +1,13 @@
 
 # merging VDem, PopuList, und ParlGov data
-# TS: 11.01.2022
 
 rm(list=ls())
 
 library(tidyverse)
 library(rio)
 library(lubridate)
-library(hrbrthemes)
+library(readtext)
+library(stringi)
 
 theme_set(theme_ipsum(base_size = 14, axis_title_size = 14, strip_text_size = 14, axis_text_size = 14, base_family = "Noto Sans"))
 
@@ -96,9 +96,73 @@ ccpc %>%
   filter(year>1989) -> 
   ccpc
 
+# number of rights in constitution
+# import names of rights in dataset
+
+rightsindex <- readtext("codebooks/rightsindex_ccp.pdf") %>%
+  select(-doc_id) %>%
+  mutate(text = str_remove_all(text, "ID\\b")) %>%
+  mutate(text = str_extract_all(text, "[:upper:]{2,}\\d{0,}")) %>%
+  unlist(text) %>%
+  str_to_lower() %>%
+  stringi::stri_replace_all_regex(c("equal\\B","artspec", "debtrght", "health", "indrght", "intprop\\B", "socsec1", "socsec(?=\\d)"), c("equalgr_", "artspec_1", "debtors", "healthr", "indpolgr_", "intprop_", "socsec", "finsup_"), vectorize_all = FALSE)%>%
+  str_remove("appeal|envref|intprop$|solissuf") %>%
+  stri_remove_empty()
+
+ccpc %>%
+  select(one_of(rightsindex), rghtapp) %>%
+  select(-arms) %>%
+  mutate(across(, ~ifelse(.==1, 1, 0))) ->
+  ccpc_rights
+
+ccpc_rights %>%
+  mutate(rights_sum = rowSums(across())) %>%
+  pull(rights_sum) ->
+  ccpc$rights_sum
+
+ccpc_rights %>%
+  mutate(rights_crim = jury, vicright, excrim, prerel, habcorp, wolaw, rghtapp, corppun, dueproc, falseimp, fairtri, speedtri, presinoc, trilang, juvenile, doubjep, miranda, couns, debtors) %>%
+  mutate(rights_ruleolaw = rowSums(select(., "citren", 
+           contains("equal"), 
+           "infoacc", 
+           "libel", 
+           "freerel", "seprel", # religion
+           "exprop", # enteignung möglich
+           "remuner", "socsec", "standliv", contains("finsup"), "shelter", "healthr", # faire entlohnung, soziale sicherheit und lebensstandard, finanzielle unterstützung bestimmtr gruppen, recht auf wohnen, gesundheitsversorgung
+           "jointrde", "strike", "occupate", "safework", "childwrk", #gewerkschaft und streik, eigene berufswahl, sichere arbeitsumgebung, verbot v kinderarbeit
+           "testate", "transfer", "inherit", contains("intprop"), "proprght", # property and inheritance
+           "busines", "freecomp", # establish busines, free market
+           "conright", # consumer rights
+           "scifree", "acfree",  # wissenschaftsfreiheit
+           "achighed", # bildung
+           "marriage", "fndfam", "matequal", "childpro", 2, # family
+           "selfdet", # selfdetermination
+           "life", 
+           "slave", "torture", "cruelty",  
+           "privacy",
+           "freemove", 
+           "opinion", "express", "petition", "censor", "press", "assem", "assoc",  # politische freiheit
+           contains("intrght"), # international human rights declarations
+           "devlpers", # persönliche freiheit
+           "nomil", # verweigerung militär
+           "asylum",
+           "artspec_1"))) %>% 
+  mutate(rights_political = rowSums(select(., "infoacc", "scifree", "acfree", "opinion", "express", "petition", "censor", "press", "assem", "assoc", contains("intrght"), "asylum","jointrde", "strike"))) %>% 
+  mutate(rights_econ = rowSums(select(., "busines", "freecomp", "conright", "testate", "transfer", "inherit", contains("intprop"), "proprght"))) %>%  # also includes property 
+  mutate(rights_ind = freerel, citren, selfdet, life, privacy, freemove, devlpers) %>%
+  mutate(rights_social = rowSums(select(., "remuner", "socsec", "standliv", contains("finsup"), "shelter", "healthr", "safework", "childwrk", "achighed"))) %>% 
+  select(contains("rights_")) ->
+  ccpc_rights_sums
+
+ccpc %>%
+  cbind(ccpc_rights_sums) ->
+  ccpc
+  
+
 # only relevant columns 
 ccpc %>% 
-  select(country,year,syst,evnt,evnttype,overthrw,amend,execindp,intexec,invexe,levjud,judind,judprec,judfin, hosterm) -> 
+  as_tibble() %>%
+  select(country,year,syst,evnt,evnttype,overthrw,amend,execindp,intexec,invexe,levjud,judind,judprec,judfin, hosterm, contains("rights_")) -> 
   ccpc
 
 head(ccpc)
@@ -128,5 +192,5 @@ ccpc_vdem %>%
   ccpc_vdem_ela
 
 # save df with only European and Latin American countries
-saveRDS(ccpc_vdem_europe,file="data/ccpc_vdem_europe.rds")
+saveRDS(ccpc_vdem_ela,file="data/ccpc_vdem_ela.rds")
 
