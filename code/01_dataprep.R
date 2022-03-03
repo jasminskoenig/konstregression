@@ -9,7 +9,6 @@ library(lubridate)
 library(readtext)
 library(stringi)
 
-theme_set(theme_ipsum(base_size = 14, axis_title_size = 14, strip_text_size = 14, axis_text_size = 14, base_family = "Noto Sans"))
 
 # data import ----
 library(vdemdata)
@@ -20,9 +19,17 @@ vparty %>%
   vparty2
 
 vparty2 %>% 
-  select(v2paenname,v2paid,country_name,year, country_id,e_regiongeo,v2xpa_illiberal,v2xpa_popul,v2paseatshare,v2patotalseat,
+  select(v2paenname, v2paorname, v2paid,country_name,year, country_id,e_regiongeo,v2xpa_illiberal,v2xpa_popul,v2paseatshare,v2patotalseat,
          v2pavote,v2pagovsup,ep_type_populism,ep_type_populist_values, ep_v8_popul_rhetoric,ep_v9_popul_saliency) -> 
   vparty2
+
+# check parties in latin america 
+vparty2 %>%
+  filter(e_regiongeo %in% c(17:29)) %>% 
+  filter(v2pagovsup %in% c(0,1,2)) %>% 
+  distinct(v2paenname, .keep_all = TRUE) %>% 
+  select(v2paenname, country_name, v2paorname) ->
+  parties_la
 
 # calculate populism score of government
 vparty2 -> df
@@ -162,14 +169,15 @@ ccpc %>%
 # only relevant columns 
 ccpc %>% 
   as_tibble() %>%
-  select(country,year,syst,evnt,evnttype,overthrw,amend,execindp,intexec,invexe,levjud,judind,judprec,judfin, hosterm, contains("rights_")) -> 
+  select(country,year,syst,evnt,evnttype,overthrw,amend,execindp,intexec,invexe,levjud,judind,judprec,judfin, conterm, conlim, hosterm, contains("rights_"), hosdec, emdecl, hogdec, legdiss, legapp, challeg_1, challeg_2, challeg_3, amndprop_1, amndprop_2,amndprop_3) -> 
   ccpc
 
 head(ccpc)
 
 # join vparty, vdem and ccpc
 ccpc_vdem <- merge(data,ccpc,by=c("country","year"),all.x=TRUE) %>%
-  filter(v2x_regime %in% c(3:4)) # only include liberal and electoral democracies
+  filter(v2x_regime %in% c(1:3)) %>% # only include liberal and electoral democracies and electoral autocracies
+  mutate(pop_in_gov = as.factor(ifelse(gov_popul_weighted > 0.5, 1, 0))) # binary variable on populists in government
 
 head(ccpc_vdem)
 

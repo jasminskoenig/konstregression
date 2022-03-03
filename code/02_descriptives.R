@@ -7,6 +7,8 @@ library(ggplot2)
 library(hrbthemes)
 library(tidyverse)
 
+theme_set(theme_ipsum(base_size = 14, axis_title_size = 14, strip_text_size = 14, axis_text_size = 14, base_family = "Noto Sans"))
+
 # import data ----
 
 ccpc_vdem <- readRDS("data/ccpc_vdem.rds")
@@ -18,7 +20,7 @@ ccpc_vdem_ela <- readRDS("data/ccpc_vdem_ela.rds")
 
 # absolute
 ccpc_vdem %>%
-  mutate(pop_in_gov = as.factor(ifelse(gov_popul_weighted > 0.6, 1, 0))) %>%
+  mutate(pop_in_gov = as.factor(ifelse(gov_popul_weighted > 0.5, 1, 0))) %>%
   filter(!is.na(pop_in_gov)) %>%
   filter(!is.na(evnttype)) %>%
   group_by(pop_in_gov, evnttype) %>%
@@ -30,7 +32,7 @@ ccpc_vdem %>%
 # share of years in power for each eventtype 
 
 ccpc_vdem %>%
-  mutate(pop_in_gov = as.factor(ifelse(gov_popul_weighted > 0.6, 1, 0))) %>%
+  mutate(pop_in_gov = as.factor(ifelse(gov_popul_weighted > 0.5, 1, 0))) %>%
   filter(!is.na(pop_in_gov)) %>%
   filter(!is.na(evnttype)) %>%
   group_by(pop_in_gov) %>%
@@ -46,7 +48,7 @@ ccpc_vdem %>%
 # only europe and LA - share of years in power for each eventtype 
 
 ccpc_vdem_ela %>%
-  mutate(pop_in_gov = as.factor(ifelse(gov_popul_weighted > 0.6, 1, 0))) %>%
+  mutate(pop_in_gov = as.factor(ifelse(gov_popul_weighted > 0.5, 1, 0))) %>%
   filter(!is.na(pop_in_gov)) %>%
   filter(!is.na(evnttype)) %>%
   group_by(pop_in_gov) %>%
@@ -62,7 +64,7 @@ ccpc_vdem_ela %>%
 # share of years in power for each eventtype - prime minister's party
 
 ccpc_vdem %>%
-  mutate(pop_in_gov = as.factor(ifelse(gov_popul_prime > 0.6, 1, 0))) %>%
+  mutate(pop_in_gov = as.factor(ifelse(gov_popul_prime > 0.5, 1, 0))) %>%
   filter(!is.na(pop_in_gov)) %>%
   filter(!is.na(evnttype)) %>%
   group_by(pop_in_gov) %>%
@@ -77,7 +79,7 @@ ccpc_vdem %>%
 
 # same only europe and LA - share of years in power for each eventtype - prime minister's party
 ccpc_vdem_ela %>%
-  mutate(pop_in_gov = as.factor(ifelse(gov_popul_prime > 0.6, 1, 0))) %>%
+  mutate(pop_in_gov = as.factor(ifelse(gov_popul_prime > 0.5, 1, 0))) %>%
   filter(!is.na(pop_in_gov)) %>%
   filter(!is.na(evnttype)) %>%
   group_by(pop_in_gov) %>%
@@ -90,53 +92,45 @@ ccpc_vdem_ela %>%
   geom_bar(position = "dodge", stat = "identity") +
   theme_minimal()
 
+# number of rights ----
 
-################################
+ccpc_vdem_ela %>%
+  mutate(pop_in_gov = as.factor(ifelse(gov_popul_prime > 0.5, 1, 0))) %>%
+  ggplot(aes(x = pop_in_gov, y = rights_ruleolaw - lag(rights_ruleolaw), label = paste(country, year))) +
+  geom_jitter()+
+  geom_text()
 
-# this was based on my dataset so it doesn't work yet ----
+ccpc_vdem_ela %>%
+  mutate(pop_in_gov = as.factor(ifelse(gov_popul_prime > 0.5, 1, 0))) %>%
+  ggplot(aes(x = pop_in_gov, y = rights_sum - lag(rights_sum), label = paste(country, year))) +
+  geom_jitter()+
+  geom_text()
 
-ccp %>%
-  filter(country == "Hungary") %>%
-  filter(evnttype != 4) %>%
-  select(levjud, judind, contains("connom"), contains("conap"), conterm, conlim, contains("conres"), unconper, contains("challeg"), chalstag, amparo, contains("jrem")) %>%
-  View()
+ccpc_vdem_ela %>%
+  mutate(pop_in_gov = as.factor(ifelse(gov_popul_prime > 0.5, 1, 0))) %>%
+  ggplot(aes(x = pop_in_gov, y = rights_ind - lag(rights_ind), label = paste(country, year))) +
+  geom_jitter()+
+  geom_text()
 
-ccp %>%
-  filter(evnttype != 4) %>%
-  select(conterm, conlim) %>%
-  View()
+ccpc_vdem_ela %>%
+  mutate(pop_in_gov = as.factor(ifelse(gov_popul_prime > 0.5, 1, 0))) %>%
+  ggplot(aes(x = pop_in_gov, y = rights_political - lag(rights_political), label = paste(country, year))) +
+  geom_jitter()+
+  geom_text()
 
-# judiciary ----
+ccpc_vdem_ela %>%
+  mutate(pop_in_gov = as.factor(ifelse(gov_popul_prime > 0.5, 1, 0))) %>%
+  ggplot(aes(x = pop_in_gov, y = rights_social - lag(rights_social), label = paste(country, year))) +
+  geom_jitter()+
+  geom_text()
 
-ccp_gov %>%
-  select(populist_vparty, country, evnttype, year, conterm, conlim) %>% 
-  mutate_at(vars(starts_with("con")), ~as.numeric(.)) %>%
-  mutate(populist_vparty = ifelse(populist_vparty > 0, 1, 0)) %>%
-  filter(conterm < 90 | conlim < 90) %>%
-  group_by(country) %>%
-  mutate(last_conterm = lag(conterm)) %>%
-  mutate(last_conlim = lag(conlim)) %>% 
-  filter(!is.na(last_conterm)) %>% 
-  mutate(diff_conterm = conterm - last_conterm) %>% 
-  ggplot() +
-  geom_jitter(aes(x= populist_vparty, y = diff_conterm))
-
-
-ccp_gov %>%
-  select(populist_vparty, country, evnttype, year, judind) %>% 
-  mutate_at(vars(starts_with("jud")), ~as.numeric(.)) %>%
-  mutate(populist_vparty = ifelse(populist_vparty > 0, 1, 0)) %>%
-  group_by(country) %>%
-  mutate(last_judind = lag(judind)) %>%
-  filter(!is.na(last_judind)) %>% 
-  mutate(diff_conterm = judind - last_judind) %>% 
-  ggplot() +
-  geom_jitter(aes(x= populist_vparty, y = diff_conterm))
+ccpc_vdem_ela %>%
+  mutate(pop_in_gov = as.factor(ifelse(gov_popul_prime > 0.5, 1, 0))) %>% filter(is.na(pop_in_gov)) %>% View()
 
 # executive ----
 
-ccp_gov %>%
-  select(populist_vparty, country, evnttype, year, hosdec, emdecl, hogdec, legdiss, legapp, challeg_1, challeg_2, challeg_3, amndprop_1, amndprop_2,amndprop_3) %>% 
+ccpc_vdem_ela %>%
+  mutate(pop_in_gov = as.factor(ifelse(gov_popul_weighted > 0.5, 1, 0))) %>%
   mutate(decree = ifelse(hosdec == 1 | hogdec == 1, 1, 0)) %>%
   mutate(emergency = ifelse(emdecl < 5, 1, 0)) %>%
   mutate(removal_leg = ifelse(legdiss < 5, 1, 0)) %>%
@@ -146,20 +140,49 @@ ccp_gov %>%
   mutate(executive = decree + emergency + removal_leg + veto + review + amendement) %>% 
   mutate(last_executive = lag(executive)) %>%
   mutate(diff_executive = executive - last_executive) %>% 
-  mutate(populist_vparty = ifelse(populist_vparty > 0, 1, 0)) %>%
   group_by(country) %>%
-  ggplot(aes(x= populist_vparty, y = diff_executive)) +
-  geom_jitter(size = 2, alpha = 0.25, width = 0.2)
+  ggplot(aes(x= pop_in_gov, y = diff_executive, label = paste(country, year))) +
+  geom_jitter(size = 2, width = 0.2) +
+  geom_text()
 
-ccp_gov %>%
-  select(populist_vparty, country, evnttype, year, hosterm) %>% 
+ccpc_vdem_ela %>%
+  mutate(pop_in_gov = as.factor(ifelse(gov_popul_weighted > 0.5, 1, 0))) %>%
   mutate_at(vars(starts_with("hos")), ~as.numeric(.)) %>%
-  mutate(populist_vparty = as.factor(ifelse(populist_vparty > 0, 1, 0))) %>%
-  filter(hosterm != 0|hosterm <= 99) %>% 
+  mutate(hosterm = na_if(hosterm, 99)) %>%
+  mutate(hosterm = na_if(hosterm, 0)) %>%
   group_by(country) %>%
   mutate(last_hosterm = lag(hosterm)) %>%
   filter(!is.na(last_hosterm)) %>% 
   mutate(diff_hosterm = hosterm - last_hosterm) %>% 
   ggplot() +
-  geom_jitter(aes(x= populist_vparty, y = diff_hosterm))
-  
+  geom_jitter(aes(x= pop_in_gov, y = diff_hosterm))
+
+
+# judiciary ----
+
+ccpc_vdem_ela %>%
+  mutate_at(vars(starts_with("con")), ~as.numeric(.)) %>%
+  mutate(conterm = na_if(conterm, 99)) %>%
+  mutate(conterm = na_if(conterm, 0)) %>%
+  mutate(conterm = na_if(conterm, 99)) %>%
+  mutate(conterm = na_if(conterm, 0)) %>%
+  group_by(country) %>%
+  mutate(last_conterm = lag(conterm)) %>%
+  mutate(last_conlim = lag(conlim)) %>% 
+  mutate(diff_conterm = conterm - last_conterm) %>% 
+  ggplot(aes(x= pop_in_gov, y = diff_conterm, label = paste(country, year))) +
+  geom_jitter() +
+  geom_text()
+
+
+ccpc_vdem_ela %>%
+  mutate_at(vars(starts_with("jud")), ~as.numeric(.)) %>%
+  group_by(country) %>%
+  mutate(last_judind = lag(judind)) %>%
+  filter(!is.na(last_judind)) %>% 
+  mutate(diff_judind = judind - last_judind) %>% 
+  ggplot() +
+  geom_jitter(aes(x= pop_in_gov, y = diff_judind)) +
+  ylim(-5,5)
+
+ 
