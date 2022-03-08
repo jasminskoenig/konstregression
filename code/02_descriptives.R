@@ -16,7 +16,6 @@ ccpc_vdem_ela <- readRDS("data/ccpc_vdem_ela.rds")
 
 # number of changes ----
 
-# this uses tilkos dataset!
 
 # absolute
 ccpc_vdem %>%
@@ -154,8 +153,9 @@ ccpc_vdem_ela %>%
   mutate(last_hosterm = lag(hosterm)) %>%
   filter(!is.na(last_hosterm)) %>% 
   mutate(diff_hosterm = hosterm - last_hosterm) %>% 
-  ggplot() +
-  geom_jitter(aes(x= pop_in_gov, y = diff_hosterm))
+  ggplot(aes(x= pop_in_gov, y = diff_hosterm, label = paste(country, year))) +
+  geom_jitter() +
+  geom_text()
 
 
 # judiciary ----
@@ -185,4 +185,38 @@ ccpc_vdem_ela %>%
   geom_jitter(aes(x= pop_in_gov, y = diff_judind)) +
   ylim(-5,5)
 
- 
+# right to constitutional review - nothing really
+
+ccpc_vdem_ela %>% 
+  group_by(country) %>%
+  select(country, contains("challeg")) %>%
+  mutate_if(is.numeric, ~.-lag(.)) %>% 
+  rowwise() %>% 
+  mutate(freq = sum(c_across(challeg_1:challeg_8)==-1))
+
+# nominations of constitutional court judges
+
+ccpc_vdem_ela %>%
+  mutate(nomination_c_exe = ifelse(connom_1 == 1 | connom_2 == 1 | connom_3 == 1, 1, 0)) %>%
+  mutate(nomination_c_leg = ifelse(connom_4 == 1 | connom_5 == 1, 1, 0)) %>%
+  mutate(nomination_c_jud = ifelse(connom_6 == 1 | connom_7 == 1, 1, 0)) %>%
+  mutate(across(contains("nomination"), ~ .-lag(.))) %>% 
+  arrange(nomination_c_exe) %>% View()
+
+# voting limitations - very seldom, but might be interesting
+
+ccpc_vdem_ela %>%
+  group_by(country) %>%
+  select(country, contains("votelim")) %>%
+  mutate_if(is.numeric, ~.-lag(.)) %>% 
+  rowwise() %>% 
+  mutate(freq = sum(c_across(votelim_1:votelim_14)==1)) %>%
+  arrange(desc(freq)) %>% View()
+
+# only populist changes of the constitution
+
+ccpc_vdem_ela %>%
+  mutate(populist_incoming = lead(pop_in_gov)) %>%
+  mutate(change_incoming = lead(evnttype)) %>%
+  filter(populist_incoming == 1 | pop_in_gov == 1) %>%
+  filter(evnttype == 1 & pop_in_gov == 1 | evnttype == 3 & pop_in_gov == 1 | change_incoming == 1 & populist_incoming == 1 | change_incoming == 3 & populist_incoming == 1) %>% View()

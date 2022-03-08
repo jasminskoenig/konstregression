@@ -169,7 +169,10 @@ ccpc %>%
 # only relevant columns 
 ccpc %>% 
   as_tibble() %>%
-  select(country,year,syst,evnt,evnttype,overthrw,amend,execindp,intexec,invexe,levjud,judind,judprec,judfin, conterm, conlim, hosterm, contains("rights_"), hosdec, emdecl, hogdec, legdiss, legapp, challeg_1, challeg_2, challeg_3, amndprop_1, amndprop_2,amndprop_3) -> 
+  select(country,year,syst,evnt,evnttype,overthrw,amend,execindp,intexec,invexe,levjud,judind,judprec,judfin, conterm, conlim, hosterm, 
+         contains("rights_"), hosdec, emdecl, hogdec, legdiss, legapp, contains("challeg"), amndprop_1, amndprop_2,amndprop_3,
+         contains("connom"), contains("votelim")) %>%
+  select(-challeg_90, challeg_96, challeg_98, -contains("connom_9"), -votelim_90, -votelim_96, -votelim_98) -> 
   ccpc
 
 head(ccpc)
@@ -177,7 +180,13 @@ head(ccpc)
 # join vparty, vdem and ccpc
 ccpc_vdem <- merge(data,ccpc,by=c("country","year"),all.x=TRUE) %>%
   filter(v2x_regime %in% c(1:3)) %>% # only include liberal and electoral democracies and electoral autocracies
-  mutate(pop_in_gov = as.factor(ifelse(gov_popul_weighted > 0.5, 1, 0))) # binary variable on populists in government
+  mutate(pop_in_gov = as.factor(ifelse(gov_popul_weighted > 0.5, 1, 0))) %>% # binary variable on populists in government
+  mutate(pop_as_pm = as.factor(ifelse(gov_popul_prime > 0.5, 1, 0))) %>% # binary variable on populist as head of government
+  mutate(amendment = as.factor(ifelse(evnttype == 1, 1, 0))) %>%
+  mutate(newconst = as.factor(ifelse(evnttype == 3, 1, 0))) %>%
+  mutate(constchange = as.factor(ifelse(evnttype == 1 | evnttype == 3, 1, 0))) %>%
+  mutate(amendment_exe = as.factor(ifelse(amndprop_1 == 1|amndprop_2 == 1| amndprop_3 == 1, 1, 0)))
+
 
 head(ccpc_vdem)
 
