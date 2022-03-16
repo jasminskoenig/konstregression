@@ -4,7 +4,7 @@ rm(list=ls())
 
 # libraries ----
 library(ggplot2) 
-library(hrbthemes)
+library(hrbrthemes)
 library(tidyverse)
 
 theme_set(theme_ipsum(base_size = 14, axis_title_size = 14, strip_text_size = 14, axis_text_size = 14, base_family = "Noto Sans"))
@@ -141,8 +141,7 @@ ccpc_vdem_ela %>%
   mutate(diff_executive = executive - last_executive) %>% 
   group_by(country) %>%
   ggplot(aes(x= pop_in_gov, y = diff_executive, label = paste(country, year))) +
-  geom_jitter(size = 2, width = 0.2) +
-  geom_text()
+  geom_jitter(size = 2, width = 0.2) 
 
 ccpc_vdem_ela %>%
   mutate(pop_in_gov = as.factor(ifelse(gov_popul_weighted > 0.5, 1, 0))) %>%
@@ -154,8 +153,7 @@ ccpc_vdem_ela %>%
   filter(!is.na(last_hosterm)) %>% 
   mutate(diff_hosterm = hosterm - last_hosterm) %>% 
   ggplot(aes(x= pop_in_gov, y = diff_hosterm, label = paste(country, year))) +
-  geom_jitter() +
-  geom_text()
+  geom_jitter() 
 
 
 # judiciary ----
@@ -212,6 +210,20 @@ ccpc_vdem_ela %>%
   rowwise() %>% 
   mutate(freq = sum(c_across(votelim_1:votelim_14)==1)) %>%
   arrange(desc(freq)) %>% View()
+
+ccpc_vdem_ela %>%
+  ggplot(aes(x = year, y = regression_lag_libdem)) +
+  geom_point() +
+  geom_text(data=subset(ccpc_vdem_ela, regression_lag_libdem < -0.1),
+            aes(year,regression_lag_libdem,label=paste(country, year)))
+
+ccpc_vdem_ela %>%
+  ggplot(aes(x = year, y = regression_lead_libdem)) +
+  geom_point() +
+  geom_text(data=subset(ccpc_vdem_ela, regression_lead_libdem < -0.1),
+            aes(year,regression_lead_libdem,label=paste(country, year)))
+
+ggsave("results/regression_lead.pdf", device = "pdf")
 
 # only populist changes of the constitution
 

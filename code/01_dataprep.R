@@ -171,8 +171,8 @@ ccpc %>%
   as_tibble() %>%
   select(country,year,syst,evnt,evnttype,overthrw,amend,execindp,intexec,invexe,levjud,judind,judprec,judfin, conterm, conlim, hosterm, 
          contains("rights_"), hosdec, emdecl, hogdec, legdiss, legapp, contains("challeg"), amndprop_1, amndprop_2,amndprop_3,
-         contains("connom"), contains("votelim")) %>%
-  select(-challeg_90, challeg_96, challeg_98, -contains("connom_9"), -votelim_90, -votelim_96, -votelim_98) -> 
+         contains("connom"), contains("votelim"), contains("conap"), conrem, amndapct, amndappr) %>%
+  select(-challeg_90, challeg_96, challeg_98, -contains("supap_9"), -contains("supnom_9"), -contains("connom_9"), -votelim_90, -votelim_96, -votelim_98) -> 
   ccpc
 
 head(ccpc)
@@ -187,8 +187,16 @@ ccpc_vdem <- merge(data,ccpc,by=c("country","year"),all.x=TRUE) %>%
   mutate(constchange = as.factor(ifelse(evnttype == 1 | evnttype == 3, 1, 0))) %>%
   mutate(amendment_exe = as.factor(ifelse(amndprop_1 == 1|amndprop_2 == 1| amndprop_3 == 1, 1, 0)))
 
-
 head(ccpc_vdem)
+
+# variable on liberal democratic regression
+ccpc_vdem %>%
+  group_by(country) %>%
+  mutate(lag_libdem = lag(v2x_libdem)) %>%
+  mutate(lead_libdem = lead(v2x_libdem)) %>%
+  mutate(regression_lag_libdem = v2x_libdem - lag_libdem) %>%
+  mutate(regression_lead_libdem = lead_libdem - v2x_libdem) ->
+  ccpc_vdem
 
 # save dataframes ----
 
