@@ -28,11 +28,13 @@ summary(model3)
 
 # regression and constitutional change
 
-model_rc1 <- lm(regression_libdem ~ newconst, 
+model_rc1 <- lm(regression_lag_libdem ~ newconst_2y, 
                 data = ccpc_vdem_ela)
 summary(model_rc1)
 
-model_rc2 <- lm(regression_libdem ~ newconst + pop_in_gov + newconst*pop_in_gov, 
+# support for our hypotheses 
+
+model_rc2 <- lm(regression_lag_libdem ~ newconst_2y + pop_in_gov + newconst_2y*pop_in_gov, 
                 data = ccpc_vdem_ela)
 summary(model_rc2)
 

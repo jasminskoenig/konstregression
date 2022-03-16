@@ -6,6 +6,8 @@ rm(list=ls())
 library(ggplot2) 
 library(hrbrthemes)
 library(tidyverse)
+library(Cairo)
+library(ggrepel)
 
 theme_set(theme_ipsum(base_size = 14, axis_title_size = 14, strip_text_size = 14, axis_text_size = 14, base_family = "Noto Sans"))
 
@@ -93,35 +95,41 @@ ccpc_vdem_ela %>%
 
 # number of rights ----
 
+# rights rule of law - nothing interesting  
 ccpc_vdem_ela %>%
-  mutate(pop_in_gov = as.factor(ifelse(gov_popul_prime > 0.5, 1, 0))) %>%
-  ggplot(aes(x = pop_in_gov, y = rights_ruleolaw - lag(rights_ruleolaw), label = paste(country, year))) +
-  geom_jitter()+
-  geom_text()
+  ggplot(aes(x = year, y = rights_ruleolaw - lag_rights_rol, color = pop_in_gov, label = paste(country, year))) +
+  geom_point() +
+  geom_text_repel(data=subset(ccpc_vdem_ela, rights_ruleolaw - lag_rights_rol < -6 | rights_ruleolaw - lag_rights_rol > 6 ),
+                  aes(year, rights_ruleolaw - lag_rights_rol,label=paste(country, year)))
 
+# sum of rights, no interesting pattern
 ccpc_vdem_ela %>%
-  mutate(pop_in_gov = as.factor(ifelse(gov_popul_prime > 0.5, 1, 0))) %>%
-  ggplot(aes(x = pop_in_gov, y = rights_sum - lag(rights_sum), label = paste(country, year))) +
-  geom_jitter()+
-  geom_text()
+  ggplot(aes(x = year, y = rights_sum - lag_rights_sum, color = pop_in_gov, label = paste(country, year))) +
+  geom_point() +
+  geom_text_repel(data=subset(ccpc_vdem_ela, rights_sum - lag_rights_sum < -3 | rights_sum - lag_rights_sum > 11 ),
+                  aes(year, rights_sum - lag_rights_sum,label=paste(country, year)))
 
-ccpc_vdem_ela %>%
-  mutate(pop_in_gov = as.factor(ifelse(gov_popul_prime > 0.5, 1, 0))) %>%
-  ggplot(aes(x = pop_in_gov, y = rights_ind - lag(rights_ind), label = paste(country, year))) +
-  geom_jitter()+
-  geom_text()
 
+# social rights - interesting pattern - onyl vrey few cases though
 ccpc_vdem_ela %>%
-  mutate(pop_in_gov = as.factor(ifelse(gov_popul_prime > 0.5, 1, 0))) %>%
-  ggplot(aes(x = pop_in_gov, y = rights_political - lag(rights_political), label = paste(country, year))) +
-  geom_jitter()+
-  geom_text()
+  ggplot(aes(x = year, y = rights_social - lag_rights_soc, color = pop_in_gov, label = paste(country, year))) +
+  geom_point() +
+  geom_text_repel(data=subset(ccpc_vdem_ela, rights_social - lag_rights_soc < -1 | rights_social - lag_rights_soc > 5 ),
+                  aes(year, rights_social - lag_rights_soc,label=paste(country, year)))
 
+# individual rights - nothing at all
 ccpc_vdem_ela %>%
-  mutate(pop_in_gov = as.factor(ifelse(gov_popul_prime > 0.5, 1, 0))) %>%
-  ggplot(aes(x = pop_in_gov, y = rights_social - lag(rights_social), label = paste(country, year))) +
-  geom_jitter()+
-  geom_text()
+  ggplot(aes(x = year, y = rights_ind - lag_rights_ind, color = pop_in_gov, label = paste(country, year))) +
+  geom_point() +
+  geom_text_repel(data=subset(ccpc_vdem_ela, rights_ind - lag_rights_ind < -0.5 | rights_ind - lag_rights_ind > 0.5 ),
+                  aes(year, rights_ind - lag_rights_ind,label=paste(country, year)))
+
+# poltitical rights, again pretty much nothing
+ccpc_vdem_ela %>%
+  ggplot(aes(x = year, y = rights_political - lag_rights_pol, color = pop_in_gov, label = paste(country, year))) +
+  geom_point() +
+  geom_text_repel(data=subset(ccpc_vdem_ela, rights_political - lag_rights_pol < 0 | rights_political - lag_rights_pol > 5 ),
+                  aes(year, rights_political - lag_rights_pol,label=paste(country, year)))
 
 ccpc_vdem_ela %>%
   mutate(pop_in_gov = as.factor(ifelse(gov_popul_prime > 0.5, 1, 0))) %>% filter(is.na(pop_in_gov)) %>% View()
@@ -129,22 +137,19 @@ ccpc_vdem_ela %>%
 # executive ----
 
 ccpc_vdem_ela %>%
-  mutate(pop_in_gov = as.factor(ifelse(gov_popul_weighted > 0.5, 1, 0))) %>%
-  mutate(decree = ifelse(hosdec == 1 | hogdec == 1, 1, 0)) %>%
-  mutate(emergency = ifelse(emdecl < 5, 1, 0)) %>%
-  mutate(removal_leg = ifelse(legdiss < 5, 1, 0)) %>%
-  mutate(veto = ifelse(legapp < 5, 1, 0)) %>%
-  mutate(review = ifelse(challeg_1 == 1 | challeg_2 == 1| challeg_3 == 1, 1, 0)) %>%
-  mutate(amendement = ifelse(amndprop_1 == 1 | amndprop_2 == 1| amndprop_3 == 1, 1, 0)) %>%
-  mutate(executive = decree + emergency + removal_leg + veto + review + amendement) %>% 
-  mutate(last_executive = lag(executive)) %>%
-  mutate(diff_executive = executive - last_executive) %>% 
-  group_by(country) %>%
-  ggplot(aes(x= pop_in_gov, y = diff_executive, label = paste(country, year))) +
-  geom_jitter(size = 2, width = 0.2) 
+  ggplot(aes(x = year, y = rights_political - lag_rights_pol, color = pop_in_gov, label = paste(country, year))) +
+  geom_point() +
+  geom_text_repel(data=subset(ccpc_vdem_ela, rights_political - lag_rights_pol < 0 | rights_political - lag_rights_pol > 5 ),
+                  aes(year, rights_political - lag_rights_pol,label=paste(country, year)))
+
 
 ccpc_vdem_ela %>%
-  mutate(pop_in_gov = as.factor(ifelse(gov_popul_weighted > 0.5, 1, 0))) %>%
+  ggplot(aes(x= year, y = diff_executive, color = pop_in_gov, label = paste(country, year))) +
+  geom_point() +
+  geom_text_repel(data=subset(ccpc_vdem_ela, diff_executive > 0 ),
+                  aes(year, diff_executive,label=paste(country, year)))
+
+ccpc_vdem_ela %>%
   mutate_at(vars(starts_with("hos")), ~as.numeric(.)) %>%
   mutate(hosterm = na_if(hosterm, 99)) %>%
   mutate(hosterm = na_if(hosterm, 0)) %>%
@@ -152,36 +157,23 @@ ccpc_vdem_ela %>%
   mutate(last_hosterm = lag(hosterm)) %>%
   filter(!is.na(last_hosterm)) %>% 
   mutate(diff_hosterm = hosterm - last_hosterm) %>% 
-  ggplot(aes(x= pop_in_gov, y = diff_hosterm, label = paste(country, year))) +
-  geom_jitter() 
+  ggplot(aes(x= year, y = diff_hosterm, color = pop_in_gov, label = paste(country, year))) +
+  geom_point() 
 
 
 # judiciary ----
 
 ccpc_vdem_ela %>%
-  mutate_at(vars(starts_with("con")), ~as.numeric(.)) %>%
-  mutate(conterm = na_if(conterm, 99)) %>%
-  mutate(conterm = na_if(conterm, 0)) %>%
-  mutate(conterm = na_if(conterm, 99)) %>%
-  mutate(conterm = na_if(conterm, 0)) %>%
-  group_by(country) %>%
-  mutate(last_conterm = lag(conterm)) %>%
-  mutate(last_conlim = lag(conlim)) %>% 
-  mutate(diff_conterm = conterm - last_conterm) %>% 
-  ggplot(aes(x= pop_in_gov, y = diff_conterm, label = paste(country, year))) +
-  geom_jitter() +
-  geom_text()
-
+  ggplot(aes(x= year, y = diff_conterm, color = pop_in_gov, label = paste(country, year))) +
+  geom_point() +
+  geom_text_repel(data=subset(ccpc_vdem_ela, diff_conterm != 0 ),
+                  aes(year, diff_conterm,label=paste(country, year)))
 
 ccpc_vdem_ela %>%
-  mutate_at(vars(starts_with("jud")), ~as.numeric(.)) %>%
-  group_by(country) %>%
-  mutate(last_judind = lag(judind)) %>%
-  filter(!is.na(last_judind)) %>% 
-  mutate(diff_judind = judind - last_judind) %>% 
   ggplot() +
-  geom_jitter(aes(x= pop_in_gov, y = diff_judind)) +
-  ylim(-5,5)
+  geom_point(aes(x= year, y = diff_judind, color = pop_in_gov)) +
+  geom_text_repel(data=subset(ccpc_vdem_ela, diff_judind != 0 ),
+                  aes(year, diff_judind,label=paste(country, year)))
 
 # right to constitutional review - nothing really
 
@@ -211,19 +203,16 @@ ccpc_vdem_ela %>%
   mutate(freq = sum(c_across(votelim_1:votelim_14)==1)) %>%
   arrange(desc(freq)) %>% View()
 
+# constitutional change and democratic regression
 ccpc_vdem_ela %>%
-  ggplot(aes(x = year, y = regression_lag_libdem)) +
+  ggplot(aes(x = year, y = regression_lag_libdem, color = as.factor(constchange_2y))) +
   geom_point() +
-  geom_text(data=subset(ccpc_vdem_ela, regression_lag_libdem < -0.1),
-            aes(year,regression_lag_libdem,label=paste(country, year)))
+  geom_text_repel(data=subset(ccpc_vdem_ela, regression_lag_libdem < -0.05 | regression_lag_libdem > 0.18 ),
+            aes(year,regression_lag_libdem,label=paste(country, year))) +
+  theme(legend.position = "bottom")
 
-ccpc_vdem_ela %>%
-  ggplot(aes(x = year, y = regression_lead_libdem)) +
-  geom_point() +
-  geom_text(data=subset(ccpc_vdem_ela, regression_lead_libdem < -0.1),
-            aes(year,regression_lead_libdem,label=paste(country, year)))
+ggsave("results/regression_constchange.pdf", device = cairo_pdf)
 
-ggsave("results/regression_lead.pdf", device = "pdf")
 
 # only populist changes of the constitution
 
