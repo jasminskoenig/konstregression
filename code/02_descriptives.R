@@ -137,13 +137,6 @@ ccpc_vdem_ela %>%
 # executive ----
 
 ccpc_vdem_ela %>%
-  ggplot(aes(x = year, y = rights_political - lag_rights_pol, color = pop_in_gov, label = paste(country, year))) +
-  geom_point() +
-  geom_text_repel(data=subset(ccpc_vdem_ela, rights_political - lag_rights_pol < 0 | rights_political - lag_rights_pol > 5 ),
-                  aes(year, rights_political - lag_rights_pol,label=paste(country, year)))
-
-
-ccpc_vdem_ela %>%
   ggplot(aes(x= year, y = diff_executive, color = pop_in_gov, label = paste(country, year))) +
   geom_point() +
   geom_text_repel(data=subset(ccpc_vdem_ela, diff_executive > 0 ),
@@ -163,12 +156,23 @@ ccpc_vdem_ela %>%
 
 # judiciary ----
 
+# additive
+ccpc_vdem_ela %>%
+  ggplot(aes(x= year, y = regression_judiciary, color = pop_in_gov)) +
+  geom_point() +
+  geom_text_repel(data=subset(ccpc_vdem_ela, regression_judiciary > 1 | regression_judiciary < 0 ),
+                  aes(year, regression_judiciary,label=paste(country, year)))
+
+ggsave("results/regression_judiciary.pdf", device = cairo_pdf)
+
+# length of term
 ccpc_vdem_ela %>%
   ggplot(aes(x= year, y = diff_conterm, color = pop_in_gov, label = paste(country, year))) +
   geom_point() +
   geom_text_repel(data=subset(ccpc_vdem_ela, diff_conterm != 0 ),
                   aes(year, diff_conterm,label=paste(country, year)))
 
+# is judicial independence mentioned?
 ccpc_vdem_ela %>%
   ggplot() +
   geom_point(aes(x= year, y = diff_judind, color = pop_in_gov)) +
@@ -182,7 +186,8 @@ ccpc_vdem_ela %>%
   select(country, contains("challeg")) %>%
   mutate_if(is.numeric, ~.-lag(.)) %>% 
   rowwise() %>% 
-  mutate(freq = sum(c_across(challeg_1:challeg_8)==-1))
+  mutate(freq = sum(c_across(challeg_1:challeg_8)==-1)) %>% # count frequency how often review rights are taken away
+  arrange(desc(freq))
 
 # nominations of constitutional court judges
 

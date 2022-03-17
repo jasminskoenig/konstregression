@@ -118,12 +118,12 @@ rightsindex <- readtext("codebooks/rightsindex_ccp.pdf") %>%
 
 ccpc %>%
   select(one_of(rightsindex), rghtapp) %>%
-  select(-arms) %>%
-  mutate(across(, ~ifelse(.==1, 1, 0))) ->
+  select(-arms) %>% 
+  mutate(across(.cols = everything(), ~ifelse(.==1, 1, 0))) ->
   ccpc_rights
 
 ccpc_rights %>%
-  mutate(rights_sum = rowSums(across())) %>%
+  mutate(rights_sum = rowSums(across())) %>% 
   pull(rights_sum) ->
   ccpc$rights_sum
 
@@ -171,8 +171,8 @@ ccpc %>%
   as_tibble() %>%
   select(country,year,syst,evnt,evnttype,overthrw,amend,execindp,intexec,invexe,levjud,judind,judprec,judfin, conterm, conlim, hosterm, 
          contains("rights_"), hosdec, emdecl, hogdec, legdiss, legapp, contains("challeg"), amndprop_1, amndprop_2,amndprop_3,
-         contains("connom"), contains("votelim"), contains("conap"), conrem, amndapct, amndappr) %>%
-  select(-challeg_90, challeg_96, challeg_98, -contains("supap_9"), -contains("supnom_9"), -contains("connom_9"), -votelim_90, -votelim_96, -votelim_98) -> 
+         contains("connom"), contains("votelim"), contains("conap"), conrem, amndapct, contains("amndappr"), contains("jrem"), judsal) %>%
+  select(-challeg_90, challeg_96, challeg_98, -contains("supap_9"), -contains("supnom_9"), -contains("connom_9"), -contains("amndappr_9"), -votelim_90, -votelim_96, -votelim_98) -> 
   ccpc
 
 head(ccpc)
@@ -193,9 +193,48 @@ head(ccpc_vdem)
 ccpc_vdem %>%
   group_by(country) %>%
   mutate(lag_libdem = lag(v2x_libdem)) %>%
-  mutate(lead_libdem = lead(v2x_libdem)) %>%
   mutate(regression_lag_libdem = v2x_libdem - lag_libdem) %>%
-  mutate(regression_lead_libdem = lead_libdem - v2x_libdem) ->
+  mutate(constchange_2y = ifelse(evnttype == 1 | evnttype == 3 | lag(evnttype) == 1 | lag(evnttype) == 3, 1, 0 )) %>%
+  mutate(newconst_2y = ifelse(evnttype == 3 | lag(evnttype) == 3, 1, 0 )) %>%
+  mutate(amendment_2y = ifelse(evnttype == 1 | lag(evnttype) == 1, 1, 0 )) ->
+  ccpc_vdem
+
+# laggig ccpc variables and calculating differences for some of them
+ccpc_vdem %>%
+  mutate_at(vars(starts_with("con")), ~as.numeric(.)) %>%
+  mutate_at(vars(starts_with("jud")), ~as.numeric(.)) %>%
+  group_by(country) %>%
+  mutate(lag_rights_rol = lag(rights_ruleolaw)) %>%  # lagging the number of rights
+  mutate(lag_rights_sum = lag(rights_sum)) %>% 
+  mutate(lag_rights_ind = lag(rights_ind)) %>% 
+  mutate(lag_rights_pol = lag(rights_political)) %>% 
+  mutate(lag_rights_soc = lag(rights_social)) %>%
+  mutate(decree = ifelse(hosdec == 1 | hogdec == 1, 1, 0)) %>% # from here on executive
+  mutate(emergency = ifelse(emdecl < 5, 1, 0)) %>%
+  mutate(removal_leg = ifelse(legdiss < 5, 1, 0)) %>%
+  mutate(veto = ifelse(legapp < 5, 1, 0)) %>%
+  mutate(review = ifelse(challeg_1 == 1 | challeg_2 == 1| challeg_3 == 1, 1, 0)) %>%
+  mutate(amendement = ifelse(amndprop_1 == 1 | amndprop_2 == 1| amndprop_3 == 1, 1, 0)) %>%
+  mutate(executive = decree + emergency + removal_leg + veto + review + amendement) %>% # additive indice for executive power
+  mutate(last_executive = lag(executive)) %>%
+  mutate(diff_executive = executive - last_executive) %>%
+  mutate(conterm = na_if(conterm, 99)) %>% # from here on judiciary
+  mutate(conterm = na_if(conterm, 0)) %>%
+  mutate(conterm = na_if(conterm, 99)) %>%
+  mutate(conterm = na_if(conterm, 0)) %>%
+  mutate(selection = ifelse(connom_1 + connom_2 + connom_3 + connom_4 + connom_5 + connom_7 + conap_1 + conap_2 + conap_3 + conap_4 + conap_5 + conap_7 > 1 | connom_6 + conap_6 > 0, 1, 0)) %>% # 2 actors involved or judicial council
+  mutate(appointment = ifelse(conlim == 1, 1, 0)) %>% # no re-election
+  mutate(removal = ifelse(jrempro_1 + jrempro_2 + jrempro_3 + jrempro_4 + jrempro_5 + jrempro_7 + jrempro_9 + jremap_1 + jremap_2 + jremap_3 + jremap_4 + jremap_5 + jremap_7 > 1 | jrempro_8 > 0 | jremap_6 + jrempro_6 > 0 | jrem == 2, 1, 0)) %>% # more than 2 actors or judiciary council involved in removal
+  mutate(removal_reason = ifelse(jremcon_1 != 1 & jremcon_5 != 1 & jremcon_96 != 1, 1, 0)) %>%
+  mutate(salary = ifelse(judsal == 1, 1, 0)) %>%
+  mutate(judiciary = judind + selection + appointment + appointment + removal + removal_reason + salary) %>% # additive indice for judicial independence (ginsburg/melton 2014)
+  mutate(lag_judiciary = lag(judiciary)) %>%
+  mutate(regression_judiciary = judiciary - lag_judiciary) %>%
+  mutate(last_conterm = lag(conterm)) %>%
+  mutate(last_conlim = lag(conlim)) %>% 
+  mutate(diff_conterm = conterm - last_conterm) %>%
+  mutate(last_judind = lag(judind)) %>%
+  mutate(diff_judind = judind - last_judind) ->
   ccpc_vdem
 
 # save dataframes ----
