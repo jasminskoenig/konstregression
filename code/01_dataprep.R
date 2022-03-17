@@ -170,7 +170,7 @@ ccpc %>%
 ccpc %>% 
   as_tibble() %>%
   select(country,year,syst,evnt,evnttype,overthrw,amend,execindp,intexec,invexe,levjud,judind,judprec,judfin, conterm, conlim, hosterm, 
-         contains("rights_"), hosdec, emdecl, hogdec, legdiss, legapp, contains("challeg"), amndprop_1, amndprop_2,amndprop_3,
+         contains("rights_"), hosdec, hosterml, emdecl, hogdec, legdiss, legapp, contains("challeg"), amndprop_1, amndprop_2,amndprop_3,
          contains("connom"), contains("votelim"), contains("conap"), conrem, amndapct, contains("amndappr"), contains("jrem"), judsal) %>%
   select(-challeg_90, challeg_96, challeg_98, -contains("supap_9"), -contains("supnom_9"), -contains("connom_9"), -contains("amndappr_9"), -votelim_90, -votelim_96, -votelim_98) -> 
   ccpc
@@ -203,6 +203,9 @@ ccpc_vdem %>%
 ccpc_vdem %>%
   mutate_at(vars(starts_with("con")), ~as.numeric(.)) %>%
   mutate_at(vars(starts_with("jud")), ~as.numeric(.)) %>%
+  mutate_at(vars(starts_with("hos")), ~as.numeric(.)) %>%
+  mutate(hosterm = na_if(hosterm, 99)) %>%
+  mutate(hosterm = na_if(hosterm, 0)) %>%
   group_by(country) %>%
   mutate(lag_rights_rol = lag(rights_ruleolaw)) %>%  # lagging the number of rights
   mutate(lag_rights_sum = lag(rights_sum)) %>% 
@@ -218,6 +221,18 @@ ccpc_vdem %>%
   mutate(executive = decree + emergency + removal_leg + veto + review + amendement) %>% # additive indice for executive power
   mutate(last_executive = lag(executive)) %>%
   mutate(diff_executive = executive - last_executive) %>%
+  mutate(last_hosterm = lag(hosterm)) %>% 
+  mutate(diff_hosterm = hosterm - last_hosterm) %>% # difference term length head of state
+  mutate(hosterml = na_if(hosterml, 99)) %>%
+  mutate(hosterml = na_if(hosterml, 96)) %>%
+  mutate(lag_hosterml = lag(hosterml)) %>%
+  mutate(term_change = case_when(
+    hosterml != 1 & lag_hosterml == 1 ~ 1,
+    lag_hosterml == 2 & hosterml != 3 & hosterml != 1 & hosterml != 2 ~ 1,
+    lag_hosterml == 3 & hosterml != 1 & hosterml != 3  ~ 1,
+    lag_hosterml == 4 & hosterml == 5 & hosterml != 4 ~ 1,
+    is.na(hosterml) | is.na(lag_hosterml) ~ NA_real_,
+    TRUE ~ 0)) %>% # more terms allowed for head of state
   mutate(conterm = na_if(conterm, 99)) %>% # from here on judiciary
   mutate(conterm = na_if(conterm, 0)) %>%
   mutate(conterm = na_if(conterm, 99)) %>%
@@ -236,6 +251,15 @@ ccpc_vdem %>%
   mutate(last_judind = lag(judind)) %>%
   mutate(diff_judind = judind - last_judind) ->
   ccpc_vdem
+
+ccpc_vdem %>%
+  select(country, contains("votelim")) %>%
+  group_by(country) %>%
+  mutate_if(is.numeric, ~.-lag(.)) %>% 
+  rowwise() %>% 
+  mutate(freq = -1*(sum(c_across(votelim_1:votelim_14)==1))) %>%
+  pull(freq) ->
+  ccpc_vdem$voting
 
 # save dataframes ----
 

@@ -19,7 +19,7 @@ ccpc_vdem_ela <- readRDS("data/ccpc_vdem_ela.rds")
 # number of changes ----
 
 
-# absolute
+# absolute, all countries
 ccpc_vdem %>%
   mutate(pop_in_gov = as.factor(ifelse(gov_popul_weighted > 0.5, 1, 0))) %>%
   filter(!is.na(pop_in_gov)) %>%
@@ -27,8 +27,7 @@ ccpc_vdem %>%
   group_by(pop_in_gov, evnttype) %>%
   summarise(n_event = n()) %>%
   ggplot(aes(x= evnttype, y = n_event, fill = pop_in_gov)) +
-  geom_bar(position = "dodge", stat = "identity") +
-  theme_minimal()
+  geom_bar(position = "dodge", stat = "identity") 
 
 # share of years in power for each eventtype 
 
@@ -43,8 +42,7 @@ ccpc_vdem %>%
   unique() %>% 
   mutate(share = n_event/n_years*100) %>%
   ggplot(aes(x= evnttype, y = share, fill = pop_in_gov)) +
-  geom_bar(position = "dodge", stat = "identity") +
-  theme_minimal()
+  geom_bar(position = "dodge", stat = "identity")
 
 # only europe and LA - share of years in power for each eventtype 
 
@@ -59,8 +57,7 @@ ccpc_vdem_ela %>%
   unique() %>% 
   mutate(share = n_event/n_years*100) %>%
   ggplot(aes(x= evnttype, y = share, fill = pop_in_gov)) +
-  geom_bar(position = "dodge", stat = "identity") +
-  theme_minimal()
+  geom_bar(position = "dodge", stat = "identity")
 
 # share of years in power for each eventtype - prime minister's party
 
@@ -75,8 +72,7 @@ ccpc_vdem %>%
   unique() %>% 
   mutate(share = n_event/n_years*100) %>%
   ggplot(aes(x= evnttype, y = share, fill = pop_in_gov)) +
-  geom_bar(position = "dodge", stat = "identity") +
-  theme_minimal()
+  geom_bar(position = "dodge", stat = "identity")
 
 # same only europe and LA - share of years in power for each eventtype - prime minister's party
 ccpc_vdem_ela %>%
@@ -90,8 +86,7 @@ ccpc_vdem_ela %>%
   unique() %>% 
   mutate(share = n_event/n_years*100) %>%
   ggplot(aes(x= evnttype, y = share, fill = pop_in_gov)) +
-  geom_bar(position = "dodge", stat = "identity") +
-  theme_minimal()
+  geom_bar(position = "dodge", stat = "identity") 
 
 # number of rights ----
 
@@ -117,6 +112,8 @@ ccpc_vdem_ela %>%
   geom_text_repel(data=subset(ccpc_vdem_ela, rights_social - lag_rights_soc < -1 | rights_social - lag_rights_soc > 5 ),
                   aes(year, rights_social - lag_rights_soc,label=paste(country, year)))
 
+ggsave("results/regression_socialrights.pdf", device = cairo_pdf)
+
 # individual rights - nothing at all
 ccpc_vdem_ela %>%
   ggplot(aes(x = year, y = rights_ind - lag_rights_ind, color = pop_in_gov, label = paste(country, year))) +
@@ -131,8 +128,6 @@ ccpc_vdem_ela %>%
   geom_text_repel(data=subset(ccpc_vdem_ela, rights_political - lag_rights_pol < 0 | rights_political - lag_rights_pol > 5 ),
                   aes(year, rights_political - lag_rights_pol,label=paste(country, year)))
 
-ccpc_vdem_ela %>%
-  mutate(pop_in_gov = as.factor(ifelse(gov_popul_prime > 0.5, 1, 0))) %>% filter(is.na(pop_in_gov)) %>% View()
 
 # executive ----
 
@@ -142,17 +137,30 @@ ccpc_vdem_ela %>%
   geom_text_repel(data=subset(ccpc_vdem_ela, diff_executive > 0 ),
                   aes(year, diff_executive,label=paste(country, year)))
 
-ccpc_vdem_ela %>%
-  mutate_at(vars(starts_with("hos")), ~as.numeric(.)) %>%
-  mutate(hosterm = na_if(hosterm, 99)) %>%
-  mutate(hosterm = na_if(hosterm, 0)) %>%
-  group_by(country) %>%
-  mutate(last_hosterm = lag(hosterm)) %>%
-  filter(!is.na(last_hosterm)) %>% 
-  mutate(diff_hosterm = hosterm - last_hosterm) %>% 
-  ggplot(aes(x= year, y = diff_hosterm, color = pop_in_gov, label = paste(country, year))) +
-  geom_point() 
+ggsave("results/executive.pdf", device = cairo_pdf)
 
+ccpc_vdem_ela %>%
+  ggplot(aes(x= year, y = diff_hosterm, color = pop_in_gov, label = paste(country, year))) +
+  geom_point() +   
+  geom_text_repel(data=subset(ccpc_vdem_ela, diff_hosterm != 0),
+                                   aes(year, diff_hosterm,label=paste(country, year)))
+
+ccpc_vdem_ela %>%
+  filter(!is.na(term_change)) %>%
+  group_by(pop_in_gov) %>%
+  mutate(n_years = n()) %>%
+  group_by(term_change, pop_in_gov) %>%
+  summarise(n_change = n(), n_years = n_years) %>%
+  unique() %>% 
+  mutate(share = n_change/n_years*100) %>%
+  ggplot(aes(x= pop_in_gov, y = share, fill = as.factor(term_change))) +
+    geom_bar(position = "stack", stat = "identity") 
+
+ccpc_vdem_ela %>%
+  ggplot(aes(x= year, y = term_change, color = pop_in_gov)) +
+  geom_point() +   
+  geom_text_repel(data=subset(ccpc_vdem_ela, term_change != 0),
+                  aes(year, term_change,label=paste(country, year)))
 
 # judiciary ----
 
@@ -172,6 +180,8 @@ ccpc_vdem_ela %>%
   geom_text_repel(data=subset(ccpc_vdem_ela, diff_conterm != 0 ),
                   aes(year, diff_conterm,label=paste(country, year)))
 
+ggsave("results/termlength_judiciary.pdf", device = cairo_pdf)
+
 # is judicial independence mentioned?
 ccpc_vdem_ela %>%
   ggplot() +
@@ -179,7 +189,7 @@ ccpc_vdem_ela %>%
   geom_text_repel(data=subset(ccpc_vdem_ela, diff_judind != 0 ),
                   aes(year, diff_judind,label=paste(country, year)))
 
-# right to constitutional review - nothing really
+# right to constitutional review - nothing really (first seven countries)
 
 ccpc_vdem_ela %>% 
   group_by(country) %>%
@@ -189,24 +199,26 @@ ccpc_vdem_ela %>%
   mutate(freq = sum(c_across(challeg_1:challeg_8)==-1)) %>% # count frequency how often review rights are taken away
   arrange(desc(freq))
 
-# nominations of constitutional court judges
+# nominations of constitutional court judges - only Peru has changes in executive power over nomination if justices
 
 ccpc_vdem_ela %>%
   mutate(nomination_c_exe = ifelse(connom_1 == 1 | connom_2 == 1 | connom_3 == 1, 1, 0)) %>%
   mutate(nomination_c_leg = ifelse(connom_4 == 1 | connom_5 == 1, 1, 0)) %>%
   mutate(nomination_c_jud = ifelse(connom_6 == 1 | connom_7 == 1, 1, 0)) %>%
   mutate(across(contains("nomination"), ~ .-lag(.))) %>% 
-  arrange(nomination_c_exe) %>% View()
+  arrange(nomination_c_exe) 
 
-# voting limitations - very seldom, but might be interesting
+# when are voting rights taken away
 
 ccpc_vdem_ela %>%
-  group_by(country) %>%
-  select(country, contains("votelim")) %>%
-  mutate_if(is.numeric, ~.-lag(.)) %>% 
-  rowwise() %>% 
-  mutate(freq = sum(c_across(votelim_1:votelim_14)==1)) %>%
-  arrange(desc(freq)) %>% View()
+  ggplot(aes(x = year, y = voting, color = pop_in_gov)) +
+  geom_point() +
+  geom_text_repel(data=subset(ccpc_vdem_ela, voting != 0),
+                  aes(year,voting,label=paste(country, year))) +
+  theme(legend.position = "bottom")
+
+ggsave("results/votingrights.pdf", device = cairo_pdf)
+
 
 # constitutional change and democratic regression
 ccpc_vdem_ela %>%
@@ -214,9 +226,10 @@ ccpc_vdem_ela %>%
   geom_point() +
   geom_text_repel(data=subset(ccpc_vdem_ela, regression_lag_libdem < -0.05 | regression_lag_libdem > 0.18 ),
             aes(year,regression_lag_libdem,label=paste(country, year))) +
-  theme(legend.position = "bottom")
+  theme(legend.position = "bottom") +
+  labs(y = "Regression Liberal Democracy V-Dem", x = "Year", color = "Was there a Constitutional Change in That Year or the Year Before?") 
 
-ggsave("results/regression_constchange.pdf", device = cairo_pdf)
+ggsave("results/constitutionalchange.pdf", device = cairo_pdf)
 
 
 # only populist changes of the constitution
