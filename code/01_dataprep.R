@@ -212,6 +212,11 @@ ccpc_vdem %>%
   mutate(lag_rights_ind = lag(rights_ind)) %>% 
   mutate(lag_rights_pol = lag(rights_political)) %>% 
   mutate(lag_rights_soc = lag(rights_social)) %>%
+  mutate(diff_rights_rol = rights_ruleolaw - lag_rights_rol) %>%  # lagging the number of rights
+  mutate(diff_rights_sum = rights_sum - lag_rights_sum) %>% 
+  mutate(diff_rights_ind = rights_ind - lag_rights_ind) %>% 
+  mutate(diff_rights_pol = rights_political - lag_rights_pol) %>% 
+  mutate(diff_rights_soc = rights_social - lag_rights_soc) %>%
   mutate(decree = ifelse(hosdec == 1 | hogdec == 1, 1, 0)) %>% # from here on executive
   mutate(emergency = ifelse(emdecl < 5, 1, 0)) %>%
   mutate(removal_leg = ifelse(legdiss < 5, 1, 0)) %>%

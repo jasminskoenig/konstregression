@@ -100,6 +100,26 @@ ccpc_vdem_ela %>%
 
 # number of rights ----
 
+# all in one
+
+ccpc_vdem_ela %>%
+  select(country, year, diff_rights_ind, diff_rights_soc, diff_rights_pol, diff_executive, regression_judiciary, regression_lag_libdem, pop_in_gov) %>% 
+  filter(regression_lag_libdem < -0.01) %>% 
+  filter(pop_in_gov == 1) %>%
+  rename(diff_judiciary = regression_judiciary) %>%
+  filter(year > 1990) %>% 
+  select(-regression_lag_libdem) %>%
+  pivot_longer(cols = contains("diff"), values_to = "n", names_to = "rights") %>% 
+  filter(n != 0) %>%
+  ggplot(aes(x = rights, y = n, label=paste(country, year))) +
+  geom_jitter(position=position_jitter(0.1)) +
+  geom_text_repel() +
+  geom_hline(yintercept=0, color = "black") +
+  scale_x_discrete(labels=c("diff_executive" = "Executive Power", "diff_judiciary" = "Judicial Independence",
+                            "diff_rights_pol" = "Political Rights", "diff_rights_soc" = "Social Rights")) +
+  ylim(-3, 8)
+  View()
+
 # rights rule of law - nothing interesting  
 ccpc_vdem_ela %>%
   ggplot(aes(x = year, y = rights_ruleolaw - lag_rights_rol, color = pop_in_gov, label = paste(country, year))) +
