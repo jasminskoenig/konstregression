@@ -19,7 +19,7 @@ vparty %>%
   vparty2
 
 vparty2 %>% 
-  select(v2paenname, v2paorname, v2paid,country_name,year, country_id,e_regiongeo,v2xpa_illiberal,v2xpa_popul,v2paseatshare,v2patotalseat,
+  select(v2paenname, v2paorname, v2paid,country_name,year, country_id,e_regiongeo,v2xpa_antiplural,v2xpa_popul,v2paseatshare,v2patotalseat,
          v2pavote,v2pagovsup,ep_type_populism,ep_type_populist_values, ep_v8_popul_rhetoric,ep_v9_popul_saliency) -> 
   vparty2
 
@@ -72,7 +72,7 @@ vdem %>%
 # only relevant columns
 vdem2 %>% 
   select(country_name,year,country_id,e_regiongeo,v2x_polyarchy,v2x_regime, v2x_libdem,v2x_delibdem,v2x_egaldem, 
-         v2x_liberal,v2xcl_rol,v2x_jucon,v2jureform,v2jupurge,v2jupoatck,v2jupack,v2juaccnt,v2jucorrdc,
+         v2x_liberal,v2xcl_rol,v2x_jucon, v2x_cspart, v2jureform,v2jupurge,v2jupoatck,v2jupack,v2juaccnt,v2jucorrdc,
          v2juhcind,v2juncind,v2juhccomp,v2jucomp,v2jureview) -> 
   vdem2
 
@@ -188,6 +188,45 @@ ccpc_vdem <- merge(data,ccpc,by=c("country","year"),all.x=TRUE) %>%
   mutate(amendment_exe = as.factor(ifelse(amndprop_1 == 1|amndprop_2 == 1| amndprop_3 == 1, 1, 0)))
 
 head(ccpc_vdem)
+
+# choose only populist const change & see which variables change
+# XXX HERE
+
+data_for_pop <- data |> 
+  select(country, year, contains("gov_popul"), v2x_regime, e_regiongeo) 
+
+ccpc_pop <- merge(data_for_pop, ccpc, by=c("country","year"), all.x=TRUE) %>%
+  filter(v2x_regime %in% c(1:3)) %>% # only include liberal and electoral democracies and electoral autocracies
+  mutate(pop_in_gov = as.factor(ifelse(gov_popul_weighted > 0.5, 1, 0))) %>% # binary variable on populists in government
+  mutate(pop_as_pm = as.factor(ifelse(gov_popul_prime > 0.5, 1, 0))) %>% # binary variable on populist as head of government
+  mutate(amendment = as.factor(ifelse(evnttype == 1, 1, 0))) %>%
+  mutate(newconst = as.factor(ifelse(evnttype == 3, 1, 0))) %>%
+  mutate(constchange = as.factor(ifelse(evnttype == 1 | evnttype == 3, 1, 0))) %>%
+  mutate(amendment_exe = as.factor(ifelse(amndprop_1 == 1|amndprop_2 == 1| amndprop_3 == 1, 1, 0)))
+
+ccpc_pop |> 
+  group_by(country) |> 
+  mutate(constchange_lead = lead(constchange),
+         gov_popul_mean_lead = lead(gov_popul_mean),
+         gov_popul_prime_lead = lead(gov_popul_prime),
+         gov_popul_weighted_lead = lead(gov_popul_weighted),
+         filter_yes = case_when(
+           constchange == 1 & gov_popul_mean > 0.5 ~ 1,
+           constchange == 1 & gov_popul_weighted > 0.5 ~ 1,
+           constchange == 1 & gov_popul_prime == 1  ~ 1,
+           constchange_lead == 1 & gov_popul_mean_lead > 0.5 ~ 1,
+           constchange_lead == 1 & gov_popul_weighted_lead > 0.5 ~ 1,
+           constchange_lead == 1 & gov_popul_prime_lead == 1  ~ 1
+         )) |> 
+  ungroup() |> 
+  filter(filter_yes == 1) |>
+  filter(e_regiongeo %in% c(1:4,17:29)) |> 
+  select(where(~n_distinct(., na.rm = TRUE) > 1)) ->
+  pop_constchange
+
+pop_constchange |> 
+  filter(country == "Bolivia") |>  
+  select(where(~n_distinct(., na.rm = TRUE) > 1)) |>  View()
 
 # variable on liberal democratic regression
 ccpc_vdem %>%

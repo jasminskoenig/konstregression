@@ -1,0 +1,11 @@
+Fragen an Tilko:
+
+- Wir kontrollieren für die Mehrheit der Populists nur durch den weighted mean?
+- Wir haben keine Kontrollvariablen?
+
+ToDos:
+
+- Populism Dummy + Dummy on Größe der Mehrheit (ich meine mich zu erinnern, das Stefan Voigt sagte es sei schwierig heraus zu finden, welche Mehrheit es für Verfassungsänderungen bräuchte)
+	- Ein bisschen fassen wir das auch mit dem Country-Fixed Effekt, wenn es in einem Land sehr schwer ist die Verfassung zu ändern, dürfte es seltener Änderungen geben
+- Vorherige Demokratiequalität als Kontrolle einfügen
+- Schauen welche Rechte verändert werden unter Populist:innen (Code bereits angefangen)

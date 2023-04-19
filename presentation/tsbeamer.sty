@@ -1,0 +1,312 @@
+% This package provides my beamer style
+% 
+% (c) Tilko Swalve
+% Jan 28, 2021
+% 
+\NeedsTeXFormat{LaTeX2e}
+\ProvidesPackage{tsbeamer}
+
+\definecolor{darkmidnightblue}{rgb}{0.0, 0.2, 0.4}
+\definecolor{burntorange}{rgb}{0.8, 0.33, 0.0}
+\usecolortheme[named=darkmidnightblue]{structure}
+\definecolor{cadmiumgreen}{rgb}{0.0, 0.42, 0.24}
+\definecolor{greysand}{rgb}{0.984, 0.98, 0.969}
+\beamertemplatenavigationsymbolsempty
+
+\RequirePackage{graphicx}
+\RequirePackage{booktabs}
+\RequirePackage{threeparttable}
+\RequirePackage{pdflscape}
+\RequirePackage{natbib}
+\RequirePackage{comment}
+\RequirePackage{color}
+\RequirePackage{multimedia}
+\RequirePackage[absolute,overlay]{textpos}
+
+\RequirePackage{tikz}
+\usetikzlibrary{matrix,mindmap,trees,shadows}
+\tikzset{concept/.append style={fill={none}}}
+\RequirePackage{multirow,array}
+
+\RequirePackage[framemethod=tikz]{mdframed}
+
+% custom commands
+\newcommand{\mybackgroundcolor}[2]{\begin{tikzpicture}
+    \useasboundingbox (0,0) rectangle (\paperwidth,\paperheight);
+    \fill [color=greysand] (#1\paperwidth,0) rectangle (#2\paperwidth,\paperheight);\end{tikzpicture}}
+    
+\newlength{\mylen}
+
+\newcommand{\framebackgroundright}[4][0.6]{
+    {   
+    \setbeamertemplate{background canvas}{\mybackgroundcolor{#1}{1}}
+    \begin{frame}{#2}
+        \begin{columns}[T] % align columns
+            \setlength{\mylen}{#1\paperwidth}
+            \begin{column}{\dimexpr\mylen-25pt}ß
+                #3
+            \end{column}%
+            \hfill%
+            \begin{column}{\dimexpr\paperwidth-\mylen-20pt}
+                #4
+            \end{column}%
+        \end{columns}
+    \end{frame}
+    }
+}
+
+\newcommand{\framebackgroundleft}[4][0.4]{
+    {
+    \setbeamertemplate{background canvas}{\mybackgroundcolor{0}{#1}}
+    \begin{frame}{#2}
+        \begin{columns}[T] % align columns
+            \setlength{\mylen}{#1\paperwidth}
+            \begin{column}{\dimexpr\mylen-25pt}
+                #3
+            \end{column}%
+            \hfill%
+            \begin{column}{\dimexpr\paperwidth-\mylen-20pt}
+                #4
+            \end{column}%
+        \end{columns}
+    \end{frame}
+    }
+} 
+
+
+
+% environments for itemization
+\newenvironment{wideitemize}{\itemize\addtolength{\itemsep}{10pt}}{\enditemize}
+
+
+% columns layout
+\newcommand{\columnrule}{\vspace{-0.2cm} \\ {\color{gray!50}\rule{\linewidth}{1pt}} \vspace{-0.3cm} \\}
+
+\newcommand{\backgroundimageleft}[2][0.4]{\usebackgroundtemplate{%
+\tikz[overlay,remember picture] \node[anchor=west, inner sep=-1, at=(current page.west)] {
+    \includegraphics[height=\paperheight,width=#1\paperwidth]{#2}};
+}}
+
+\newcommand{\backgroundimageright}[2][0.4]{\usebackgroundtemplate{%
+\tikz[overlay,remember picture] \node[anchor=east, inner sep=-1, at=(current page.east)] {
+    \includegraphics[height=\paperheight,width=#1\paperwidth]{#2}};
+}}
+
+
+\newcommand{\frameimageleft}[4][0.4]{
+        {
+        \backgroundimageleft[#1]{#2}
+        \begin{frame}{\hspace{#1\linewidth}#3}
+            \begin{columns}[T] % align columns  
+                \setlength{\mylen}{#1\paperwidth}        
+                \begin{column}{\mylen}
+                \end{column}%
+                \hfill%
+                \begin{column}{\dimexpr\paperwidth-\mylen-15pt}
+                #4
+                \end{column}%
+        \end{columns} 
+        \end{frame}
+        }
+    } 
+
+\newcommand{\frameimageright}[4][0.4]{
+        {
+        \backgroundimageright[#1]{#2}
+        \begin{frame}{#3}
+            \begin{columns}[T] % align columns  
+                \setlength{\mylen}{#1\paperwidth}        
+                \begin{column}{\dimexpr\paperwidth-\mylen-35pt}
+                #4
+                \end{column}%
+                \hfill%
+                \begin{column}{\mylen}
+                \end{column}%
+        \end{columns} 
+        \end{frame}
+        }
+    }     
+
+\newcommand{\frametwocolumns}[3]{
+    \begin{frame}[t]{#1}
+        \vspace{0.25cm}
+        \begin{columns}[T] % align columns
+                \begin{column}{.5\textwidth}
+                #2
+                \end{column}%
+                \hfill%
+                \begin{column}{.5\textwidth}
+                #3
+                \end{column}%
+            \end{columns}
+    \end{frame}
+}
+
+\newcommand{\framethreecolumns}[4]{
+    \begin{frame}[t]{#1}
+        \vspace{0.25cm}
+        \begin{columns}[T] % align columns
+                \begin{column}{.33\textwidth}
+                #2
+                \end{column}%
+                \hfill%
+                \begin{column}{.33\textwidth}
+                #3
+                \end{column}%
+                \hfill                
+                \begin{column}{.33\textwidth}
+                #4
+                \end{column}%
+            \end{columns}
+    \end{frame}
+}
+
+
+\newcommand{\frametitleslide}[2]{
+    {
+        \usebackgroundtemplate{\includegraphics[width=\paperwidth,height=\paperheight]{#1}}
+        \begin{frame}[plain]
+        \setsansfont{Config Condensed Light}
+        #2
+        \end{frame}
+        }
+}
+
+\newcommand{\frameimportantpoint}[1]{
+    \begin{frame}[plain]
+        \begin{tikzpicture}[overlay, remember picture]
+            \node[anchor=center,text width=.8\textwidth] 
+            at (current page.center) {
+                \setsansfont{Noto Sans Condensed Light}
+                    \large \hspace{-0.18cm}#1  
+             };
+            \end{tikzpicture}
+    \end{frame}
+}
+
+% execute at begin node=\setlength{\baselineskip}{4ex}
+
+\newcommand{\frameprinciple}[2]{
+    \begin{frame}[plain]
+        \begin{tikzpicture}[remember picture,overlay]
+            \node[anchor=center,text width=.8\textwidth] 
+            at (current page.center) {
+                \begin{block}{\Large \setsansfont{Noto Sans Condensed Light} \alert{#1}}
+                \vspace{0.15cm}
+                \setlength{\baselineskip}{2.5ex}
+                #2
+                \end{block}
+              };
+          \end{tikzpicture}
+    \end{frame}
+}
+
+
+\newcommand{\framequote}[2]{
+    \begin{frame}[plain]
+        \begin{tikzpicture}[remember picture,overlay]
+            \node[anchor=center,text width=.95\textwidth] 
+            at (current page.center) {
+                \begin{block}{}
+                    \begin{quote}
+                        \centering
+                        #1
+                    \end{quote}
+                    \begin{flushright}
+                        \scriptsize --- #2 $\qquad$ $\qquad$
+                    \end{flushright}
+                \end{block}
+              };
+          \end{tikzpicture}
+    \end{frame}
+}
+
+
+\newcommand{\myquote}[2]{
+    \begin{block}{}
+        \hspace{-0.3cm}\begin{quote}
+        #1
+        \end{quote}
+        \begin{flushright}
+            \scriptsize --- #2 $\qquad$ $\qquad$
+        \end{flushright}
+    \end{block}
+}
+
+
+\setbeamertemplate{itemize item}[circle]            % First level item
+\setbeamertemplate{itemize subitem}[triangle]       % Second level item
+\setbeamertemplate{itemize subsubitem}{\raisebox{0.15em}{\scalebox{1}{$\blacktriangleright$}}}   % Third level item
+
+% boxes
+\newenvironment{standardbox}[1][]{%
+  \ifstrempty{#1}%
+  {\mdfsetup{%
+    frametitle={%
+      \tikz[baseline=(current bounding box.east),outer sep=0pt]
+      \node[anchor=east,rectangle,fill=white]
+    {\strut #1};}}
+  }%
+  {\mdfsetup{%
+    frametitle={%
+      \tikz[baseline=(current bounding box.east),outer sep=0pt]
+      \node[anchor=east,rectangle,fill=structure.fg!70!white,text=white]
+    {\strut #1};}}%
+  }%
+  \mdfsetup{innertopmargin=0pt,innerleftmargin=15pt, innerrightmargin=15pt,
+            innerbottommargin=12pt,
+            linecolor=structure.fg!70!white,%
+            linewidth=1.5pt,topline=true,%
+            frametitleaboveskip=\dimexpr-\ht\strutbox\relax}
+  \begin{mdframed}[backgroundcolor = none]\vspace{0.15cm}\relax%
+  }{\end{mdframed}}
+
+    \newenvironment{keyconceptbox}[1][]{%
+    \ifstrempty{#1}%
+    {\mdfsetup{%
+      frametitle={%
+        \tikz[baseline=(current bounding box.east),outer sep=0pt]
+        \node[anchor=east,rectangle,fill=white]
+      {\strut #1};}}
+    }%
+    {\mdfsetup{%
+      frametitle={%
+        \tikz[baseline=(current bounding box.east),outer sep=0pt]
+        \node[anchor=east,rectangle,fill=burntorange!85!white, text=white]
+      {\strut #1};}}%
+    }%
+    \mdfsetup{innertopmargin=0pt,innerleftmargin=15pt, innerrightmargin=15pt,
+              innerbottommargin=12pt,
+              linecolor=burntorange!85!white,%
+              linewidth=1.5pt,topline=true,%
+              frametitleaboveskip=\dimexpr-\ht\strutbox\relax}
+    \begin{mdframed}[backgroundcolor = none]\vspace{0.15cm}\relax%
+    }{\end{mdframed}}
+
+    \newenvironment{exercisebox}[1][]{%
+      \ifstrempty{#1}%
+      {\mdfsetup{%
+        frametitle={%
+          \tikz[baseline=(current bounding box.east),outer sep=0pt]
+          \node[anchor=east,rectangle]
+        {\strut #1};}}
+      }%
+      {\mdfsetup{%
+        frametitle={%
+          \tikz[baseline=(current bounding box.east),outer sep=0pt]
+          \node[anchor=east,rectangle,fill=cadmiumgreen!80!white,text=white]
+        {\strut #1};}}%
+      }%
+      \mdfsetup{innertopmargin=0pt,innerleftmargin=15pt, innerrightmargin=15pt,
+                innerbottommargin=12pt,
+                linecolor=cadmiumgreen!80!white,%
+                linewidth=1.5pt,topline=true,%
+                frametitleaboveskip=\dimexpr-\ht\strutbox\relax}
+      \begin{mdframed}[backgroundcolor = none]\vspace{0.15cm}\relax%
+      }{\end{mdframed}}
+
+
+
+\endinput
+%%
+%% End of file `tsbeamer.sty'.

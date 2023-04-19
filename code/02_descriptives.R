@@ -102,23 +102,43 @@ ccpc_vdem_ela %>%
 
 # all in one
 
+pos <- position_jitter(width = 0.3, seed = 2)
+
 ccpc_vdem_ela %>%
-  select(country, year, diff_rights_ind, diff_rights_soc, diff_rights_pol, diff_executive, regression_judiciary, regression_lag_libdem, pop_in_gov) %>% 
-  filter(regression_lag_libdem < -0.01) %>% 
+  select(country, year, e_regiongeo, diff_rights_ind, diff_rights_soc, diff_rights_pol, diff_executive, regression_judiciary, regression_lag_libdem, pop_in_gov) %>% 
+  #filter(regression_lag_libdem < 0) %>% 
   filter(pop_in_gov == 1) %>%
+  select(-diff_rights_ind) %>%
   rename(diff_judiciary = regression_judiciary) %>%
   filter(year > 1990) %>% 
   select(-regression_lag_libdem) %>%
   pivot_longer(cols = contains("diff"), values_to = "n", names_to = "rights") %>% 
-  filter(n != 0) %>%
-  ggplot(aes(x = rights, y = n, label=paste(country, year))) +
-  geom_jitter(position=position_jitter(0.1)) +
-  geom_text_repel() +
+  filter(n != 0) %>% 
+  mutate(continent = case_when(
+    e_regiongeo %in% c(17:29) ~ "Latinamerika",
+    e_regiongeo %in% c(1:4) ~ "Europe",
+    TRUE ~ NA)) %>%
+  ggplot() +
+  geom_jitter(aes(x = 0, 
+                  y = n, 
+                  color = continent, ), 
+              position = pos) +
+  geom_text_repel(aes(x = 0, 
+                      y = n, 
+                      label=paste(country, year),
+                      color = continent), 
+                  position = pos, size = 5) +
+  facet_wrap(~ rights) +
   geom_hline(yintercept=0, color = "black") +
-  scale_x_discrete(labels=c("diff_executive" = "Executive Power", "diff_judiciary" = "Judicial Independence",
-                            "diff_rights_pol" = "Political Rights", "diff_rights_soc" = "Social Rights")) +
-  ylim(-3, 8)
-  View()
+  scale_x_discrete(labels=c("diff_executive" = "Exekutive Macht", "diff_judiciary" = "Unabhängige Justiz",
+                            "diff_rights_pol" = "Politische Rechte", "diff_rights_soc" = "Soziale Rechte")) +
+  ylim(-3, 8) +
+  ylab("Veränderungen der Indizes") +
+  xlab("")
+
+ggsave("results/rights_change.pdf", width = 25, height = 20, units = "cm", device = cairo_pdf)
+ggsave("results/rights_change.png", width = 25, height = 20, units = "cm", device = "png")
+
 
 # rights rule of law - nothing interesting  
 ccpc_vdem_ela %>%
