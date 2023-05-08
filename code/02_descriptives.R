@@ -104,14 +104,14 @@ ccpc_vdem_ela %>%
 
 pos <- position_jitter(width = 0.3, seed = 2)
 
-ccpc_vdem_ela %>%
-  select(country, year, e_regiongeo, diff_rights_ind, diff_rights_soc, diff_rights_pol, diff_executive, regression_judiciary, regression_lag_libdem, pop_in_gov) %>% 
+ccpc_vdem_ela %>% 
+  dplyr::select(country, year, e_regiongeo, diff_rights_ind, diff_rights_soc, diff_rights_pol, diff_executive, regression_judiciary, regression_lag_libdem, pop_in_gov) %>%
   #filter(regression_lag_libdem < 0) %>% 
   filter(pop_in_gov == 1) %>%
-  select(-diff_rights_ind) %>%
+  dplyr::select(-diff_rights_ind) %>%
   rename(diff_judiciary = regression_judiciary) %>%
   filter(year > 1990) %>% 
-  select(-regression_lag_libdem) %>%
+  dplyr::select(-regression_lag_libdem) %>%
   pivot_longer(cols = contains("diff"), values_to = "n", names_to = "rights") %>% 
   filter(n != 0) %>% 
   mutate(continent = case_when(

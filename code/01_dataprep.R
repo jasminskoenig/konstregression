@@ -4,7 +4,6 @@
 rm(list=ls())
 
 library(tidyverse)
-library(rio)
 library(lubridate)
 library(readtext)
 library(stringi)
@@ -43,13 +42,12 @@ df %>%
 
 # calculate populism scores
 df %>% 
-  group_by(country_name,year) %>% 
+  group_by(country_name,year, e_regiongeo) %>% 
   mutate(gov_seatshare = sum(v2paseatshare), 
-         weight=v2paseatshare/gov_seatshare) %>% 
-  summarise(gov_popul_mean=mean(v2xpa_popul), 
+         weight = v2paseatshare/gov_seatshare) %>% 
+  summarise(gov_popul_mean = mean(v2xpa_popul), 
             gov_popul_weighted = sum(v2xpa_popul*weight), 
             gov_seatshare = gov_seatshare, 
-            e_regiongeo=e_regiongeo, 
             no_govparties = n()) %>% 
   unique() ->
   df2
@@ -235,14 +233,19 @@ ccpc_vdem %>%
   mutate(regression_lag_libdem = v2x_libdem - lag_libdem) %>%
   mutate(constchange_2y = ifelse(evnttype == 1 | evnttype == 3 | lag(evnttype) == 1 | lag(evnttype) == 3, 1, 0 )) %>%
   mutate(newconst_2y = ifelse(evnttype == 3 | lag(evnttype) == 3, 1, 0 )) %>%
-  mutate(amendment_2y = ifelse(evnttype == 1 | lag(evnttype) == 1, 1, 0 )) ->
+  mutate(amendment_2y = ifelse(evnttype == 1 | lag(evnttype) == 1, 1, 0 )) %>%
+  ungroup() ->
   ccpc_vdem
 
 # laggig ccpc variables and calculating differences for some of them
 ccpc_vdem %>%
-  mutate_at(vars(starts_with("con")), ~as.numeric(.)) %>%
-  mutate_at(vars(starts_with("jud")), ~as.numeric(.)) %>%
-  mutate_at(vars(starts_with("hos")), ~as.numeric(.)) %>%
+  rename(new_constchange = constchange,
+         new_constchange2y = constchange_2y) %>%
+  mutate_at(vars(starts_with("con")), ~as.numeric(.)) %>% 
+  mutate_at(vars(starts_with("jud")), ~as.numeric(.)) %>% 
+  rename(constchange = new_constchange,
+         constchange_2y = new_constchange2y) %>% 
+  mutate(hosterm = as.numeric(str_remove_all(hosterm, "\\D"))) %>% 
   mutate(hosterm = na_if(hosterm, 99)) %>%
   mutate(hosterm = na_if(hosterm, 0)) %>%
   group_by(country) %>%
@@ -293,13 +296,14 @@ ccpc_vdem %>%
   mutate(last_conlim = lag(conlim)) %>% 
   mutate(diff_conterm = conterm - last_conterm) %>%
   mutate(last_judind = lag(judind)) %>%
-  mutate(diff_judind = judind - last_judind) ->
+  mutate(diff_judind = judind - last_judind) %>%
+  ungroup() ->
   ccpc_vdem
 
 ccpc_vdem %>%
   select(country, contains("votelim")) %>%
-  group_by(country) %>%
   mutate_if(is.numeric, ~.-lag(.)) %>% 
+  group_by(country) %>%
   rowwise() %>% 
   mutate(freq = -1*(sum(c_across(votelim_1:votelim_14)==1))) %>%
   pull(freq) ->

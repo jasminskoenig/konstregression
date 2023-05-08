@@ -9,3 +9,6 @@ ToDos:
 	- Ein bisschen fassen wir das auch mit dem Country-Fixed Effekt, wenn es in einem Land sehr schwer ist die Verfassung zu ändern, dürfte es seltener Änderungen geben
 - Vorherige Demokratiequalität als Kontrolle einfügen
 - Schauen welche Rechte verändert werden unter Populist:innen (Code bereits angefangen)
+- Add Literature
+	- Ruth 2018
+	- Ruth-Lovell 2022
