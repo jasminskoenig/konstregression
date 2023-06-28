@@ -5,7 +5,6 @@
 rm(list=ls())
 
 library(tidyverse)
-library(rio)
 library(lubridate)
 library(hrbrthemes)
 
@@ -17,7 +16,7 @@ library(vdemdata)
 vparty %>% filter(year>1989) -> vparty2
 
 vparty2 %>% select(v2paenname,v2paid,country_name,year,
-country_id,e_regiongeo,v2xpa_illiberal,v2xpa_popul,v2paseatshare,
+country_id,e_regiongeo,v2xpa_antiplural,v2xpa_popul,v2paseatshare,
 v2patotalseat,v2pavote,v2pagovsup,ep_type_populism,ep_type_populist_values, 
 ep_v8_popul_rhetoric,ep_v9_popul_saliency) -> vparty2
 
@@ -64,5 +63,5 @@ head(ccpc_vdem)
 
 ccpc_vdem %>% filter(e_regiongeo %in% c(1:4)) -> ccpc_vdem
 
-saveRDS(ccpc_vdem,file="data/ccpc_vdem.rds")
+#saveRDS(ccpc_vdem,file="data/ccpc_vdem.rds")
 
