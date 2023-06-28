@@ -13,7 +13,7 @@ vparty2 %>%
          country_id,e_regiongeo,v2xpa_antiplural,v2xpa_popul,
          v2paseatshare,v2patotalseat,v2pavote,v2pagovsup,
          ep_type_populism,ep_type_populist_values, 
-         ep_v8_popul_rhetoric,ep_v9_popul_saliency, pf_party_id) -> 
+         ep_v8_popul_rhetoric,ep_v9_popul_saliency, v2pariglef, pf_party_id) -> 
   vparty2
 
 # partyfacts ----
@@ -65,6 +65,14 @@ popuList_short <- popuList |>
 popuList_shorter <- popuList_short |> 
   select(partyfacts_id, populist_interval) |> 
   distinct(partyfacts_id, .keep_all = TRUE)
+
+# popuList included countries
+
+popuList |> 
+  group_by(country_name) |> 
+  distinct(country_name) |> 
+  mutate(dataset = "PopuList") ->
+  popuList_countries
 
 # match with vparty2 on party-country base
 vparty2 |> 
@@ -130,13 +138,18 @@ ruth_smaller <- ruth |>
          "president" = "V5",
          "ruth_populism" = "V6")
 
+# CHES ----
+
+ches_eu <- read.csv("data/ches_eu.csv", header = TRUE)
+ches_la <- readRDS("data/ches_la.rds")
+
 # Coding the V-Party Dataset ----
 
 # calculate populism score of government
 vparty2 -> 
   df
 
-# party in gpovernment
+# party in government
 df$gov_party <- ifelse(df$v2pagovsup %in% c(0, 1, 2), 1, 0)
 
 # exclude parties that only support government, but are not respresented
@@ -149,24 +162,30 @@ df %>%
   filter(gov_party == 1) ->
   vparty_governments
 
-# Take care of this warning
+# calculate government information
 vparty_governments %>% 
   group_by(country_name,year) %>% 
   # seat share of government
   mutate(gov_seatshare = sum(v2paseatshare), 
          # calculate weight of government parties
          weight = v2paseatshare/gov_seatshare,
-         rooduijn_government = if_else(sum(rooduijn) > 1, 1, 0),
-         rooduijn_government_senior = if_else(sum(rooduijn_senior) > 1, 1, 0)) %>% 
+         rooduijn_government = if_else(sum(rooduijn) > 0, "Populist", "Non-Populist"),
+         rooduijn_government_senior = if_else(sum(rooduijn_senior) > 0, "Populist", "Non-Populist")) %>% 
   group_by(country_name, year, gov_seatshare, e_regiongeo, rooduijn_government, rooduijn_government_senior) %>% 
   # calulcate mean of populism score and weighted populism score per year of country (= per government)
   summarise(gov_popul_mean = mean(v2xpa_popul),
             # calculate weighted pop score per party and then add as weighted pop score per government
             gov_popul_weighted = sum(v2xpa_popul*weight),
+            # calculate weighted left - right econ
+            gov_ideol_mean = mean(v2pariglef),
+            gov_ideol_weighted = sum(v2pariglef*weight),
             gov_poppa_mean = mean(poppa),
             gov_poppa_weighted = sum(poppa*weight),
             no_govparties = n(),
-            .groups = "drop")  -> 
+            .groups = "drop") |>
+  # dummies for economic left-right
+  mutate(econ_right = if_else(gov_ideol_weighted > 0.5, 1, 0),
+         econ_left = if_else(gov_ideol_weighted < 0.5, 1, 0)) -> 
   vparty_governments_populism
 
 # populism score of party of president in vparty
@@ -177,18 +196,14 @@ df %>%
   # Only very few countries have heads of governments from two parties (conflict resolution)
   # for these we calculate the mean
   summarize(gov_popul_prime = mean(gov_popul_prime),
-            .groups = "drop") |> 
-  rename("rooduijn_prime" = "rooduijn") -> 
+            .groups = "drop") ->
   vparty_prime
 
 # join together as new dataframe that includes information on populism in government
 partydat <- left_join(vparty_governments_populism,
                       vparty_prime,
-                      by=c("country_name","year"),
-                      multiple = "all") # THIS MUST BE CHANGED
-
+                      by=c("country_name","year")) 
 glimpse(partydat)
-
 
 saveRDS(partydat, "data/party_populism.rds")
 
