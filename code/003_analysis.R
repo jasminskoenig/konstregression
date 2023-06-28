@@ -2,7 +2,6 @@
 # TS: 22.08.2022
 
 library(tidyverse)
-library(rio)
 library(lubridate)
 library(stargazer)
 library(rms)
@@ -34,6 +33,7 @@ theme_set(theme_gridY)
 
 
 load("repli/ccpc_vdem.Rdata")
+ccpc_vdem_new <- readRDS("data/ccpc_vdem_eu_la")
 
 # year as factor for random intercepts
 ccpc_vdem$year <- as.numeric(as.character(ccpc_vdem$year))
@@ -265,8 +265,8 @@ summary(pm3cs)
 
 ccpc_vdem %>% 
   filter(e_regiongeo %in% c(1:4,17:18),
-         year>1990,
-         v2x_regime>0) -> 
+         year > 1990,
+         v2x_regime > 0) -> 
   df4
 
 # create dummy for latin  America

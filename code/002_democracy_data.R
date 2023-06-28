@@ -17,7 +17,7 @@ vdem2 %>%
          v2x_libdem, v2x_delibdem, v2x_egaldem, v2x_liberal, v2xcl_rol, v2x_cspart,
          v2x_jucon, v2jureform, v2jupurge, v2jupoatck, v2jupack,
          v2juaccnt, v2jucorrdc, v2juhcind, v2juncind, v2juhccomp,
-         v2jucomp, v2jureview) |> 
+         v2jucomp, v2jureview, v2x_regime) |> 
   mutate(country_name = if_else(country_name == "Czechia", "Czech Republic", country_name)) -> 
   vdem2
 
